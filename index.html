@@ -1068,10 +1068,11 @@ function renderTable(){
       const c = avatarColors[(m.id||i) % avatarColors.length];
       const isActive = !m.leaveDate;
       const accountCell = (currentUser.isAdmin || (currentUser.isDeptAdmin && m.dept === currentUser.dept))
-        ? `<td style="color:var(--text-secondary);font-size:13px"><span style="opacity:.7">用户名：</span>${m.name} <span style="opacity:.5;margin-left:2px">/ 密码哈希：${(m.passwordHash||'').substring(0,8)}...</span></td>`
+        ? `<td style="color:var(--text-secondary);font-size:13px"><span style="opacity:.7">用户名：</span>${m.name} <span style="opacity:.5;margin-left:2px">/ 密码：已加密</span></td>`
         : (showAdmin ? `<td style="color:rgba(128,128,128,0.3);font-size:13px">******</td>` : '');
       const actionCell = canManage(m) ? `<td><div class="actions-cell">
           <button class="icon-btn" title="编辑" onclick="openModal('edit',${m.id})">✏</button>
+          <button class="icon-btn" title="重置密码" onclick="confirmResetPwd(${m.id},'${m.name}')">🔑</button>
           <button class="icon-btn delete" title="删除" onclick="confirmDelete(${m.id},'${m.name}')">🗑</button>
         </div></td>` : (showAdmin ? '<td></td>' : '');
       return `<tr>
@@ -1171,6 +1172,9 @@ function confirmDelete(id, name){
   const m = members.find(x => x.id === id);
   if(!canManage(m)){ showToast('error','无权限删除该成员'); return; }
   document.getElementById('confirmMsg').textContent = `确定要删除「${name}」的记录吗？此操作不可撤销。`;
+  document.getElementById('confirmModal').querySelector('.modal-header h2').textContent = '确认删除';
+  document.getElementById('confirmDelBtn').textContent = '确认删除';
+  document.getElementById('confirmDelBtn').className = 'btn btn-danger';
   document.getElementById('confirmModal').classList.add('show');
   document.getElementById('confirmDelBtn').onclick = () => {
     members = members.filter(m => m.id !== id);
@@ -1183,6 +1187,34 @@ function confirmDelete(id, name){
   };
 }
 function closeConfirm(){ document.getElementById('confirmModal').classList.remove('show'); }
+
+// ===== RESET PASSWORD =====
+function confirmResetPwd(id, name){
+  const m = members.find(x => x.id === id);
+  if(!canManage(m)){ showToast('error','无权限重置该成员密码'); return; }
+  document.getElementById('confirmMsg').innerHTML = `确定要将「<b>${name}</b>」的密码重置为默认密码吗？<br><span style="font-size:12px;color:var(--text-secondary);margin-top:4px;display:inline-block">重置后该成员可使用默认密码登录</span>`;
+  document.getElementById('confirmModal').querySelector('.modal-header h2').textContent = '重置密码';
+  document.getElementById('confirmDelBtn').textContent = '确认重置';
+  document.getElementById('confirmDelBtn').className = 'btn btn-primary';
+  document.getElementById('confirmDelBtn').onclick = () => {
+    doResetPwd(id, name);
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
+function doResetPwd(id, name){
+  const m = members.find(x => x.id === id);
+  if(m){
+    m.passwordHash = DEFAULT_PASSWORD_HASH;
+    saveData();
+  }
+  closeConfirm();
+  // 恢复删除确认弹窗的默认状态
+  document.getElementById('confirmModal').querySelector('.modal-header h2').textContent = '确认删除';
+  document.getElementById('confirmDelBtn').textContent = '确认删除';
+  document.getElementById('confirmDelBtn').className = 'btn btn-danger';
+  document.getElementById('confirmDelBtn').onclick = null;
+  showToast('success', `已重置 ${name} 的密码`);
+}
 
 // ===== CHANGE PASSWORD =====
 function openChangePwdFromSettings(){
