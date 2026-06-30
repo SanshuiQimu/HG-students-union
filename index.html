@@ -732,20 +732,76 @@ let currentFilter = '全部';
 // Tab state
 let currentTab = 0;
 
+// 云端 API 基地址（自动检测当前域名）
+var API_BASE = window.location.origin;
+
 function loadData(){
   localStorage.removeItem('su_members_data');
   localStorage.removeItem('su_members_data_v2');
+  // 优先从云端加载
+  fetch(API_BASE + '/api/members', {headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(Array.isArray(data) && data.length > 0){
+        members = data;
+        members.forEach(function(m){ if(!m.passwordHash) m.passwordHash = DEFAULT_PASSWORD_HASH; });
+        saveDataLocal();
+      } else {
+        loadFromLocal();
+      }
+      afterLoadData();
+    })
+    .catch(function(){
+      loadFromLocal();
+      afterLoadData();
+    });
+}
+function loadFromLocal(){
   const saved = localStorage.getItem(STORAGE_KEY);
   if(saved){
-    try{ members = JSON.parse(saved); }catch(e){ members = [...DEFAULT_DATA]; }
-  } else {
-    members = [...DEFAULT_DATA];
+    try{ members = JSON.parse(saved); }catch(e){ members = []; }
   }
-  // 确保每个成员都有 passwordHash 字段
-  members.forEach(m => { if(!m.passwordHash) m.passwordHash = DEFAULT_PASSWORD_HASH; });
-  if(!saved) saveData();
+  if(!members || !members.length) members = [...DEFAULT_DATA];
+  members.forEach(function(m){ if(!m.passwordHash) m.passwordHash = DEFAULT_PASSWORD_HASH; });
 }
-function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(members)); }
+function saveDataLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(members)); }
+function saveData(){
+  saveDataLocal();
+  // 异步同步到云端
+  fetch(API_BASE + '/api/members', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(members)
+  }).catch(function(){});
+}
+var _dataReady = false;
+function afterLoadData(){
+  _dataReady = true;
+  onDataReady();
+}
+function onDataReady(){
+  // 由 handleLogin 在数据加载完成后调用
+}
+function waitDataReady(cb){
+  if(_dataReady) cb(); else onDataReady = cb;
+}
+function syncFromCloud(){
+  fetch(API_BASE + '/api/members', {headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(Array.isArray(data) && data.length > 0){
+        members = data;
+        members.forEach(function(m){ if(!m.passwordHash) m.passwordHash = DEFAULT_PASSWORD_HASH; });
+        saveDataLocal();
+        // 刷新界面
+        updateStats();
+        renderDeptGrid();
+        buildFilters();
+        renderTable();
+      }
+    })
+    .catch(function(){});
+}
 
 // ===== PERMISSION HELPERS =====
 function canManage(m){
@@ -802,9 +858,11 @@ function handleLogin(){
     return;
   }
 
+  // 先从本地快速验证，再从云端同步
+  loadFromLocal();
+
   // SHA-256 密码哈希验证
   const passHash = sha256(pass);
-  loadData();
   let profileData = null;
 
   const found = members.find(m => m.name === user);
@@ -914,6 +972,9 @@ function handleLogin(){
   // 初始化 dock 第一个 tab 为 active
   setActiveIndex(0);
 
+  // 从云端同步最新数据（异步）
+  syncFromCloud();
+
   // 检测密码是否为默认密码123456，弹窗提示修改
   if(found.passwordHash === DEFAULT_PASSWORD_HASH){
     document.getElementById('changePwdHint').style.display = 'block';
@@ -954,7 +1015,7 @@ function switchTab(idx){
 
 // ===== MAIN =====
 function initMain(){
-  loadData();
+  // 数据已经在 handleLogin 中通过 loadFromLocal 加载
   updateStats();
   renderDeptGrid();
   buildFilters();
@@ -969,6 +1030,8 @@ function initMain(){
     localStorage.setItem('su_msg_initialized', '1');
   }
   updateMsgBadge();
+  // 同步云端消息
+  syncMessagesFromCloud();
 }
 
 function updateStats(){
@@ -1298,6 +1361,23 @@ function loadMessages(){
 }
 function saveMessages(msgs){
   localStorage.setItem(MSG_KEY, JSON.stringify(msgs));
+  // 异步同步到云端
+  fetch(API_BASE + '/api/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(msgs)
+  }).catch(function(){});
+}
+function syncMessagesFromCloud(){
+  fetch(API_BASE + '/api/messages', {headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(Array.isArray(data)){
+        localStorage.setItem(MSG_KEY, JSON.stringify(data));
+        updateMsgBadge();
+      }
+    })
+    .catch(function(){});
 }
 function getMyMessages(){
   var allMsgs = loadMessages();
