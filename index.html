@@ -365,7 +365,7 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       </div>
       <button class="login-btn" onclick="handleLogin()">登 录</button>
       <div class="login-error" id="loginError">用户名或密码错误，或不在系统名单中</div>
-      <div id="loginForgot" style="text-align:right;margin-top:6px"><a href="javascript:void(0)" onclick="resetAllData()" style="font-size:12px;color:var(--text-secondary);text-decoration:none">忘记密码？重置所有数据</a></div>
+      <div id="loginForgot" style="text-align:right;margin-top:6px"><span style="font-size:12px;color:var(--text-secondary)">忘记密码？请联系部长重置</span></div>
     </div>
   </div>
 </div>
@@ -744,21 +744,9 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // ===== DATA =====
-const STORAGE_KEY = 'su_members_data_v3';
+const STORAGE_KEY = 'su_members_data_v4';
 const DEFAULT_DATA = [
-  {id:1,name:'张明远',dept:'秘书处',position:'部长',duty:'统筹协调各部门工作、会议组织',joinDate:'2025-09-01',leaveDate:''},
-  {id:2,name:'李思语',dept:'秘书处',position:'副部长',duty:'文件管理、财务审批',joinDate:'2025-09-01',leaveDate:''},
-  {id:3,name:'王浩然',dept:'学习部',position:'部长',duty:'组织学术讲座、学习经验分享会',joinDate:'2025-09-01',leaveDate:''},
-  {id:4,name:'赵雨晨',dept:'学习部',position:'干事',duty:'学习资料整理、活动宣传文案',joinDate:'2025-10-15',leaveDate:''},
-  {id:5,name:'陈欣怡',dept:'体育部',position:'部长',duty:'策划校园体育赛事、运动会组织',joinDate:'2025-09-01',leaveDate:''},
-  {id:6,name:'刘子轩',dept:'体育部',position:'干事',duty:'赛事组织协调、器材管理',joinDate:'2025-10-15',leaveDate:''},
-  {id:7,name:'杨雅琪',dept:'宣传部',position:'部长',duty:'公众号运营、宣传海报设计',joinDate:'2025-09-01',leaveDate:''},
-  {id:8,name:'黄嘉文',dept:'宣传部',position:'副部长',duty:'摄影摄像、视频剪辑',joinDate:'2025-09-01',leaveDate:''},
-  {id:9,name:'孙梦琪',dept:'纪检部',position:'部长',duty:'考勤管理、纪律检查',joinDate:'2025-09-01',leaveDate:''},
-  {id:10,name:'郑浩宇',dept:'纪检部',position:'干事',duty:'日常巡查、评分记录',joinDate:'2025-10-15',leaveDate:''},
-  {id:11,name:'林晓萱',dept:'生活部',position:'部长',duty:'宿舍管理、校园生活服务',joinDate:'2025-09-01',leaveDate:''},
-  {id:12,name:'钱思源',dept:'社联会',position:'部长',duty:'社团管理、社团活动审批',joinDate:'2025-09-01',leaveDate:''},
-  {id:13,name:'徐雨菲',dept:'社联会',position:'干事',duty:'社团联络、活动协调',joinDate:'2025-10-15',leaveDate:''},
+  {id:1,name:'林可翔',dept:'秘书处',position:'部长',duty:'统筹协调各部门工作、会议组织',joinDate:'2026-04-01',leaveDate:''},
 ];
 
 const HASH_SALT = 'SU_HG_2025_LGKJ';
@@ -832,15 +820,6 @@ function sha256(str){
   return H.map(function(v){return v.toString(16).padStart(8,'0')}).join('');
 }
 
-function resetAllData(){
-  if(confirm('确定要重置所有数据吗？\n这将清除所有已保存的成员数据、消息记录和个人设置，恢复为初始状态。')){
-    localStorage.removeItem('su_members_data');
-    localStorage.removeItem('su_messages_data');
-    localStorage.removeItem('su_msg_initialized');
-    localStorage.removeItem('app-theme');
-    location.reload();
-  }
-}
 
 function handleLogin(){
   const user = document.getElementById('loginUser').value.trim();
