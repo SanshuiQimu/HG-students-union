@@ -615,6 +615,23 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       <button class="btn btn-secondary" onclick="closeMessages()" style="padding:8px 14px;font-size:13px">← 返回设置</button>
       <h2 style="font-size:18px;font-weight:600">消息通知</h2>
     </div>
+
+    <!-- 群发消息（仅部长及以上可见） -->
+    <div id="broadcastSection" style="display:none;margin-bottom:20px">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="color:var(--gold)">
+            <path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 11-5.8-1.6"/>
+          </svg>
+          <span style="font-size:15px;font-weight:600;color:var(--text)">群发通知</span>
+        </div>
+        <textarea id="broadcastText" placeholder="输入要发送给全体成员的通知内容，如：7月15日下午2点在会议室召开全体例会，请准时参加。" style="width:100%;min-height:100px;resize:vertical;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button onclick="sendBroadcast()" style="flex:1;padding:10px 16px;border-radius:10px;border:none;background:var(--gold);color:#000;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .3s">发送给全体成员</button>
+        </div>
+      </div>
+    </div>
+
     <div id="msgList">
       <div class="msg-empty">暂无消息</div>
     </div>
@@ -1612,6 +1629,32 @@ function sendMsg(to, title, body, operatorName, operatorDept, type, applicantNam
   saveMessages(msgs);
 }
 
+function sendBroadcast(){
+  var text = document.getElementById('broadcastText').value.trim();
+  if(!text){
+    showToast('error', '请输入通知内容');
+    return;
+  }
+  if(!confirm('确认发送给全体 ' + members.length + ' 名成员？')){
+    return;
+  }
+  // 给每个成员发送消息
+  members.forEach(function(m){
+    if(m.leaveDate) return; // 离任成员跳过
+    sendMsg(m.name,
+      '群发通知（来自' + currentUser.dept + '）',
+      text,
+      currentUser.name, currentUser.dept, 'broadcast'
+    );
+  });
+  // 清空输入框
+  document.getElementById('broadcastText').value = '';
+  showToast('success', '已发送给全体成员');
+  // 刷新消息列表
+  renderMessages();
+  updateMsgBadge();
+}
+
 // ===== BADGE APPLY =====
 var _badgePage = null;
 function getBadgePage(){ if(!_badgePage) _badgePage = document.getElementById('badgePage'); return _badgePage; }
@@ -1686,6 +1729,9 @@ var _msgPage = null;
 function getMsgPage(){ if(!_msgPage) _msgPage = document.getElementById('msgPage'); return _msgPage; }
 function openMessages(){
   var p = getMsgPage();
+  // 部长及以上显示群发功能
+  var canBroadcast = currentUser.isAdmin || currentUser.isDeptAdmin;
+  document.getElementById('broadcastSection').style.display = canBroadcast ? 'block' : 'none';
   renderMessages();
   markAllRead();
   setTimeout(updateMsgBadge, 100);
