@@ -1340,8 +1340,14 @@ window.addEventListener('popstate', function(e){
     history.pushState(null, '', location.href);
     return;
   }
-  // 在主界面，再按一次退出
+  // 在主界面，先确保回到 tab1
   if(document.getElementById('mainPage').style.display === 'block'){
+    if(currentTab !== 0){
+      switchTab(0);
+      history.pushState(null, '', location.href);
+      return;
+    }
+    // 已经在 tab1，再按一次退出
     if(window._exitConfirm){
       window._exitConfirm = false;
       history.back();
