@@ -2672,7 +2672,7 @@ document.querySelectorAll(".dock-items-wrap .dock-item").forEach((item, i) => {
 
 // ===== THEME TOGGLING =====
 let currentAppTheme = localStorage.getItem('app-theme') || 'dark';
-let autoThemeMode = false;
+let autoThemeMode = localStorage.getItem('auto-theme') === '1';
 
 function setTheme(theme) {
   if (autoThemeMode) return; // 自动模式下不响应手动选择
@@ -2682,26 +2682,36 @@ function setTheme(theme) {
 }
 
 function applyAppTheme() {
+  // 自动模式下跟随系统
+  if (autoThemeMode) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (prefersDark) {
+      currentAppTheme = prefersDark.matches ? 'dark' : 'light';
+    }
+  }
   const html = document.documentElement;
   html.classList.remove('light-mode');
   if (currentAppTheme === 'light') {
     html.classList.add('light-mode');
   }
   // 更新选择卡片状态
-  document.getElementById('themeCardLight').classList.toggle('active', currentAppTheme === 'light');
-  document.getElementById('themeCardDark').classList.toggle('active', currentAppTheme === 'dark');
-  document.getElementById('checkLight').style.display = currentAppTheme === 'light' ? 'flex' : 'none';
-  document.getElementById('checkDark').style.display = currentAppTheme === 'dark' ? 'flex' : 'none';
+  var cardLight = document.getElementById('themeCardLight');
+  var cardDark = document.getElementById('themeCardDark');
+  var checkLight = document.getElementById('checkLight');
+  var checkDark = document.getElementById('checkDark');
+  if (cardLight) cardLight.classList.toggle('active', currentAppTheme === 'light');
+  if (cardDark) cardDark.classList.toggle('active', currentAppTheme === 'dark');
+  if (checkLight) checkLight.style.display = currentAppTheme === 'light' ? 'flex' : 'none';
+  if (checkDark) checkDark.style.display = currentAppTheme === 'dark' ? 'flex' : 'none';
 }
 
 function toggleAutoThemeMode() {
   autoThemeMode = document.getElementById('toggleAutoTheme').checked;
   if (autoThemeMode) {
-    // 检测系统主题
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    currentAppTheme = prefersDark ? 'dark' : 'light';
+    localStorage.setItem('auto-theme', '1');
     localStorage.removeItem('app-theme'); // 自动模式下不保存
   } else {
+    localStorage.removeItem('auto-theme');
     currentAppTheme = localStorage.getItem('app-theme') || 'dark';
   }
   applyAppTheme();
@@ -2725,15 +2735,35 @@ function toggleCompactMode() {
   document.body.style.fontSize = compact ? '13px' : '';
 }
 
-// 监听系统主题变化
+// 监听系统主题变化（兼容 WebView）
 if (window.matchMedia) {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  var mql = window.matchMedia('(prefers-color-scheme: dark)');
+  var themeListener = function(e) {
     if (autoThemeMode) {
       currentAppTheme = e.matches ? 'dark' : 'light';
       applyAppTheme();
     }
-  });
+  };
+  if (mql.addEventListener) {
+    mql.addEventListener('change', themeListener);
+  } else if (mql.addListener) {
+    mql.addListener(themeListener);
+  }
 }
+
+// 页面从后台切回前台时重新检测主题（移动端 WebView 兼容）
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && autoThemeMode) {
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (prefersDark) {
+      var newTheme = prefersDark.matches ? 'dark' : 'light';
+      if (newTheme !== currentAppTheme) {
+        currentAppTheme = newTheme;
+        applyAppTheme();
+      }
+    }
+  }
+});
 
 // 初始化主题
 applyAppTheme();
