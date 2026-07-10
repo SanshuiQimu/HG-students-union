@@ -40,8 +40,10 @@
       pointer-events:none;
       opacity:0;
       transition:opacity .3s ease;
-      backdrop-filter:blur(12px) saturate(1.5);
-      -webkit-backdrop-filter:blur(12px) saturate(1.5);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      -webkit-mask-image:linear-gradient(to bottom,#000 0px,rgba(0,0,0,0.9) 30px,rgba(0,0,0,0.5) 45px,transparent 60px);
+      mask-image:linear-gradient(to bottom,#000 0px,rgba(0,0,0,0.9) 30px,rgba(0,0,0,0.5) 45px,transparent 60px);
     }
 
     body{padding-top:50px !important}
@@ -2809,7 +2811,7 @@ applyAppTheme();
     var b = isLight ? 255 : 26;
     var stops = [];
     for(var i = 0; i <= 100; i++){
-      var alpha = 0.7 * (1 - i / 100);
+      var alpha = 0.35 * (1 - i / 100);
       stops.push('rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(4) + ') ' + (i * 0.6).toFixed(1) + 'px');
     }
     bar.style.background = 'linear-gradient(to bottom,' + stops.join(',') + ')';
