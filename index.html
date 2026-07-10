@@ -1459,19 +1459,38 @@ function initMain(){
 }
 
 // ===== 消息轮询 + 原生通知（仅 Android App）=====
-var _lastMsgCount = -1;
+var _lastMsgIds = {};
 var _msgPollTimer = null;
+var _msgPollInterval = 3000; // 前台3秒
 function startMsgPolling(){
   if(!document.documentElement.classList.contains('android-app')) return;
   if(_msgPollTimer) return;
-  // 立即检查一次
+  _lastMsgIds = {}; // 重置已通知的消息ID
+  // 通知原生层当前用户
+  if(window.AndroidNative && window.AndroidNative.setUser){
+    window.AndroidNative.setUser(currentUser.name);
+  }
   checkNewMessages();
-  // 每30秒轮询一次
-  _msgPollTimer = setInterval(checkNewMessages, 30000);
+  _msgPollTimer = setInterval(checkNewMessages, _msgPollInterval);
+
+  // 页面可见性变化时调整轮询频率
+  document.addEventListener('visibilitychange', function(){
+    if(_msgPollTimer){ clearInterval(_msgPollTimer); _msgPollTimer = null; }
+    _msgPollInterval = document.hidden ? 15000 : 3000; // 后台15秒，前台3秒
+    // 通知原生层用户状态
+    if(window.AndroidNative && window.AndroidNative.onAppVisibilityChanged){
+      window.AndroidNative.onAppVisibilityChanged(document.hidden);
+    }
+    _msgPollTimer = setInterval(checkNewMessages, _msgPollInterval);
+  });
 }
 
 function stopMsgPolling(){
   if(_msgPollTimer){ clearInterval(_msgPollTimer); _msgPollTimer = null; }
+  _lastMsgIds = {};
+  if(window.AndroidNative && window.AndroidNative.stopBackgroundPolling){
+    window.AndroidNative.stopBackgroundPolling();
+  }
 }
 
 function checkNewMessages(){
@@ -1480,37 +1499,29 @@ function checkNewMessages(){
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(!Array.isArray(data)) return;
-      // 同步到本地
       localStorage.setItem(MSG_KEY, JSON.stringify(data));
-      // 找到发给当前用户的未读消息
       var myMsgs = data.filter(function(m){ return m.to === currentUser.name; });
-      var unreadCount = myMsgs.filter(function(m){ return !m.read; }).length;
 
-      if(_lastMsgCount < 0){
-        // 首次：记录当前未读数，不弹通知
-        _lastMsgCount = unreadCount;
-        updateMsgBadge();
-        return;
-      }
+      // 找未通知过的新消息
+      var newUnnotified = myMsgs.filter(function(m){
+        return !m.read && !_lastMsgIds[m.id];
+      });
 
-      if(unreadCount > _lastMsgCount){
-        // 有新消息，弹通知
-        var newMsgs = myMsgs.slice(_lastMsgCount > 0 ? -(_lastMsgCount) : 0);
-        // 实际找最新的几条
-        var recentMsgs = myMsgs.slice(-3);
-        var notifyCount = unreadCount - _lastMsgCount;
+      if(newUnnotified.length > 0){
+        // 标记已通知
+        newUnnotified.forEach(function(m){ _lastMsgIds[m.id] = true; });
 
         // 调用原生通知
         if(window.AndroidNative && window.AndroidNative.showNotification){
-          if(notifyCount === 1 && recentMsgs.length > 0){
-            var m = recentMsgs[recentMsgs.length - 1];
+          if(newUnnotified.length === 1){
+            var m = newUnnotified[0];
             window.AndroidNative.showNotification(m.title || '新消息', m.body || '');
           } else {
-            window.AndroidNative.showNotification('收到 ' + notifyCount + ' 条新消息', '点击查看详情');
+            window.AndroidNative.showNotification('收到 ' + newUnnotified.length + ' 条新消息', newUnnotified[newUnnotified.length - 1].title || '点击查看详情');
           }
         }
       }
-      _lastMsgCount = unreadCount;
+
       updateMsgBadge();
     })
     .catch(function(){});
