@@ -20,7 +20,7 @@
     --inner-shadow-blur:20px;
     --inner-shadow-spread:-5px;
     --outer-shadow-blur:24px;
-    --clipL:4px;--clipW:79px;--clipT:2px;--clipH:48px;
+    --clipL:4px;--clipW:79px;--clipT:3.5px;--clipH:48px;
     --theme-color:rgb(226,176,74);
     --fg-color:#e6edf3;
     --bg-color:#0d1117;
@@ -210,17 +210,20 @@
   .ripple-layer{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none;-webkit-mask-image:var(--mask-solid);mask-image:var(--mask-solid);-webkit-mask-size:100% 100%;mask-size:100% 100%}
   .ripple-wave{position:absolute;width:120px;height:120px;border-radius:50%;pointer-events:none;opacity:1;background:radial-gradient(circle,rgba(255,255,255,0.7) 0%,rgba(255,255,255,0) 60%);transform:translate(-50%,-50%) scale(0);animation:ripple-anim 0.6s cubic-bezier(0.25,1,0.5,1) forwards}
   @keyframes ripple-anim{to{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
-  .dock-items-wrap{position:absolute;inset:0;display:flex;align-items:flex-start;color:var(--fg-color);touch-action:none;z-index:998;padding-top:2px}
-  .dock-item{flex:0 0 81.5px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:inherit;cursor:pointer;transform-origin:center center;transition:color 0.3s ease,transform 0.3s cubic-bezier(0.25,1,0.5,1)}
+  .dock-items-wrap{position:absolute;inset:0;z-index:998;color:var(--fg-color);touch-action:none;-webkit-mask-image:linear-gradient(#000,#000),var(--slider-mask-solid);mask-image:linear-gradient(#000,#000),var(--slider-mask-solid);-webkit-mask-size:100% 100%,var(--clipW) var(--clipH);mask-size:100% 100%,var(--clipW) var(--clipH);-webkit-mask-position:0 0,var(--clipL) var(--clipT);mask-position:0 0,var(--clipL) var(--clipT);-webkit-mask-repeat:no-repeat,no-repeat;mask-repeat:no-repeat,no-repeat;-webkit-mask-composite:destination-out;mask-composite:exclude}
+  .dock-item{position:absolute;top:3.5px;width:81.5px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:inherit;cursor:pointer;z-index:3;transform-origin:center center;transition:transform 0.3s cubic-bezier(0.25,1,0.5,1)}
+  .dock-item:nth-child(1){left:3px}
+  .dock-item:nth-child(2){left:83px}
+  .dock-item:nth-child(3){left:162px}
+  .dock-item:nth-child(4){left:242px}
   .dock-item svg{width:25px;height:25px}
   .dock-item span{margin-top:4px;font-size:10px;font-weight:800;letter-spacing:0.5px}
-  .dock-item.active{color:var(--theme-color)}
-  .dock-item.active svg{filter:drop-shadow(0 0 6px var(--theme-color))}
-  .dock-container.expanding .dock-item.active{transform:scale(1.1)}
-  #frosted-slider{position:absolute;top:2px;left:4px;width:79px;height:48px;z-index:999;overflow:hidden;opacity:1;pointer-events:auto;touch-action:none;background-color:rgba(var(--slider-tint-rgb),0.15);box-shadow:0 2px 8px rgba(0,0,0,0.06);transform:translateZ(0);-webkit-mask-image:var(--slider-mask-solid);mask-image:var(--slider-mask-solid);-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-backdrop-filter:url(#liquid-glass-dispersion-filter);backdrop-filter:url(#liquid-glass-dispersion-filter);transition:background-color 0.4s ease,box-shadow 0.4s ease}
+  #frosted-slider{position:absolute;top:3.5px;left:4px;width:79px;height:48px;z-index:999;overflow:hidden;opacity:1;pointer-events:auto;touch-action:none;background-color:rgba(var(--slider-tint-rgb),0.15);box-shadow:0 2px 8px rgba(0,0,0,0.06);transform:translateZ(0);-webkit-mask-image:var(--slider-mask-solid);mask-image:var(--slider-mask-solid);-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-backdrop-filter:url(#liquid-glass-dispersion-filter);backdrop-filter:url(#liquid-glass-dispersion-filter);transition:background-color 0.4s ease,box-shadow 0.4s ease}
   #frosted-slider.expanding{background-color:rgba(var(--slider-tint-rgb),0.06);box-shadow:inset 0 0 var(--inner-shadow-blur) var(--inner-shadow-spread) var(--inner-shadow-color),0 2px var(--outer-shadow-blur) rgba(0,0,0,0.2)}
   #frosted-slider::after{content:"";position:absolute;inset:0;z-index:9999;pointer-events:none;opacity:0;background:linear-gradient(135deg,rgba(255,255,255,0.9) 0%,transparent 50%),linear-gradient(-35deg,rgba(255,255,255,0.9) 0%,transparent 50%);mix-blend-mode:plus-lighter;-webkit-mask-image:var(--slider-mask-hollow);mask-image:var(--slider-mask-hollow);-webkit-mask-size:100% 100%;mask-size:100% 100%;transition:opacity 0.4s ease}
   #frosted-slider.expanding::after{opacity:1}
+  .dock-active-layer{position:absolute;inset:0;z-index:998;color:var(--theme-color);opacity:1;pointer-events:none;-webkit-mask-image:var(--slider-mask-solid);mask-image:var(--slider-mask-solid);-webkit-mask-size:var(--clipW) var(--clipH);mask-size:var(--clipW) var(--clipH);-webkit-mask-position:var(--clipL) var(--clipT);mask-position:var(--clipL) var(--clipT);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+  .dock-container.expanding .dock-active-layer .dock-item{transform:scale(1.1)}
 
   @media(max-width:430px){.bottom-controls{bottom:18px}}
 
@@ -318,7 +321,6 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
 /* ===== BADGE & MESSAGES ===== */
 .badge-dot{position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:#ef4444;border-radius:50%;border:2px solid var(--bg);z-index:2;pointer-events:none;display:none}
 .badge-dot.show{display:block}
-.dock-item{position:relative}
 .msg-list-container{padding:0 20px 100px;max-width:600px;margin:0 auto}
 .msg-item{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;transition:all .3s}
 .msg-item.unread{border-left:3px solid var(--gold)}
@@ -674,6 +676,37 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       </div>
 
       <div id="frosted-slider"></div>
+
+      <div class="dock-active-layer" id="active-mask">
+        <div class="dock-item">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9v-1a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1z"/>
+            <path d="M3 11v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5z"/>
+          </svg><span>秘书处</span>
+        </div>
+        <div class="dock-item">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg><span>部门概览</span>
+        </div>
+        <div class="dock-item">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg><span>成员列表</span>
+        </div>
+        <div class="dock-item">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg><span>设置</span>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -1983,10 +2016,6 @@ function setExpanding(val) {
 
 function setActiveIndex(idx) {
   currentActiveIndex = idx;
-  // 更新 dock-item active 状态
-  document.querySelectorAll('.dock-items-wrap .dock-item').forEach((item, i) => {
-    item.classList.toggle('active', i === idx);
-  });
   switchTab(idx);
 }
 
@@ -2042,7 +2071,7 @@ function physLoop(time) {
   const vW = 79 * currentSX * sliderBaseScale;
   const vH = 48 * currentSY * sliderBaseScale;
   const vL = currentX - (vW - 79) / 2;
-  const vT = 2 - (vH - 48) / 2;
+  const vT = 3.5 - (vH - 48) / 2;
   document.documentElement.style.setProperty("--clipL", `${vL}px`);
   document.documentElement.style.setProperty("--clipW", `${vW}px`);
   document.documentElement.style.setProperty("--clipT", `${vT}px`);
@@ -2069,11 +2098,11 @@ function physLoop(time) {
   if (Math.abs(dockCurrentShiftY - dockTargetShiftY) < 0.01) dockCurrentShiftY = dockTargetShiftY;
   dockRoot.style.transform = `translate(${dockCurrentShiftX}px, ${dockCurrentShiftY}px) scale(${dockBaseScale})`;
 
-  if (mainGlassNodes && mainGlassNodes.r && isExpanding) {
-    const tFilterScale = targetGlassScale;
-    const tFilterSpec = targetGlassSpec;
-    const targetDispR = 0.95;
-    const targetDispB = 1.05;
+  if (mainGlassNodes && mainGlassNodes.r) {
+    const tFilterScale = isExpanding ? targetGlassScale : 0;
+    const tFilterSpec = isExpanding ? targetGlassSpec : 0;
+    const targetDispR = isExpanding ? 0.95 : LIQUID_CONFIG.sliderDispR;
+    const targetDispB = isExpanding ? 1.05 : LIQUID_CONFIG.sliderDispB;
     curDispR += (targetDispR - curDispR) * 0.15;
     curDispB += (targetDispB - curDispB) * 0.15;
     currentFilterScale += (tFilterScale - currentFilterScale) * 0.15;
@@ -2084,32 +2113,18 @@ function physLoop(time) {
     mainGlassNodes.spec.setAttribute("slope", currentFilterSpec.toFixed(2));
   }
 
-  // Only compute dockRect and glow properties when interacting with dock
-  const isInteracting = isDragging || dockPressed;
-  if (isInteracting) {
-    const dockRect = dockRoot.getBoundingClientRect();
-    const targetDockInner = 1;
-    dockInnerOp += (targetDockInner - dockInnerOp) * 0.15;
-    globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.15;
-    currentGlowRadius += (1 - currentGlowRadius) * 0.1;
-    dockRoot.style.setProperty("--innerGlowOp", dockInnerOp.toFixed(3));
-    dockRoot.style.setProperty("--edgeGlowOp", globalEdgeOp.toFixed(3));
-    dockRoot.style.setProperty("--glowRadius", currentGlowRadius.toFixed(3));
-    dockRoot.style.setProperty("--innerX", `${clamp(globalPtrX - dockRect.left, 0, dockRect.width)}px`);
-    dockRoot.style.setProperty("--innerY", `${clamp(globalPtrY - dockRect.top, 0, dockRect.height)}px`);
-    dockRoot.style.setProperty("--edgeX", `${(dockRect.left + clamp(globalPtrX - dockRect.left, 0, dockRect.width)) - dockRect.left}px`);
-    dockRoot.style.setProperty("--edgeY", `${(dockRect.top + clamp(globalPtrY - dockRect.top, 0, dockRect.height)) - dockRect.top}px`);
-  } else {
-    const targetDockInner = 0;
-    if (dockInnerOp > 0.001) {
-      dockInnerOp += (targetDockInner - dockInnerOp) * 0.15;
-      globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.15;
-      currentGlowRadius += (1.3 - currentGlowRadius) * 0.1;
-      dockRoot.style.setProperty("--innerGlowOp", dockInnerOp.toFixed(3));
-      dockRoot.style.setProperty("--edgeGlowOp", globalEdgeOp.toFixed(3));
-      dockRoot.style.setProperty("--glowRadius", currentGlowRadius.toFixed(3));
-    }
-  }
+  const dockRect = dockRoot.getBoundingClientRect();
+  const targetDockInner = (isDragging || dockPressed) ? 1 : 0;
+  dockInnerOp += (targetDockInner - dockInnerOp) * 0.15;
+  globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.15;
+  currentGlowRadius += ((targetDockInner ? 1 : 1.3) - currentGlowRadius) * 0.1;
+  dockRoot.style.setProperty("--innerGlowOp", dockInnerOp.toFixed(3));
+  dockRoot.style.setProperty("--edgeGlowOp", globalEdgeOp.toFixed(3));
+  dockRoot.style.setProperty("--glowRadius", currentGlowRadius.toFixed(3));
+  dockRoot.style.setProperty("--innerX", `${clamp(globalPtrX - dockRect.left, 0, dockRect.width)}px`);
+  dockRoot.style.setProperty("--innerY", `${clamp(globalPtrY - dockRect.top, 0, dockRect.height)}px`);
+  dockRoot.style.setProperty("--edgeX", `${(targetDockInner ? dockRect.left + clamp(globalPtrX - dockRect.left, 0, dockRect.width) : globalPtrX) - dockRect.left}px`);
+  dockRoot.style.setProperty("--edgeY", `${(targetDockInner ? dockRect.top + clamp(globalPtrY - dockRect.top, 0, dockRect.height) : globalPtrY) - dockRect.top}px`);
 
   requestAnimationFrame(physLoop);
 }
