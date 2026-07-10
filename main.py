@@ -1,4 +1,4 @@
-import os, json, hashlib, sqlite3, threading
+import os, json, hashlib, sqlite3, threading, urllib.parse
 from flask import Flask, send_from_directory, request, jsonify
 
 app = Flask(__name__)
@@ -322,7 +322,8 @@ def save_messages():
 import hashlib, secrets, urllib.request, urllib.error
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
-SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+# 兼容新版和旧版环境变量名
+SUPABASE_KEY = os.environ.get('SUPABASE_SECRET_KEY', '') or os.environ.get('SUPABASE_SERVICE_KEY', '')
 _use_supabase = bool(SUPABASE_URL and SUPABASE_KEY)
 
 if _use_supabase:
@@ -356,7 +357,9 @@ def _supabase_headers():
     }
 
 def _supabase_request(method, path, body=None):
-    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    # 对路径中的中文进行 URL 编码
+    encoded_path = urllib.parse.quote(path, safe='=/&?')
+    url = f"{SUPABASE_URL}/rest/v1/{encoded_path}"
     headers = _supabase_headers()
     data = json.dumps(body).encode('utf-8') if body else None
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
