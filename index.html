@@ -1958,10 +1958,10 @@ function initLiquidGlass() {
 initLiquidGlass();
 
 /* Core 3: Bottom Dock interaction - spring-driven slider, deformation, mask clipping, SVG filter intensity */
-const SOFT_K = 0.045;
-const SOFT_D = 0.84;
-const JELLY_K = 0.01;
-const JELLY_D = 0.95;
+const SOFT_K = 0.035;
+const SOFT_D = 0.80;
+const JELLY_K = 0.008;
+const JELLY_D = 0.91;
 const TARGET_POSITIONS = [4, 83, 162, 241];
 const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 const rubberBand = (distance, limit) => (distance * 0.05 * limit) / (Math.abs(distance * 0.05) + limit);
@@ -2034,7 +2034,7 @@ function physLoop(time) {
   }
 
   const dist = Math.abs(targetX - currentX);
-  const lerpFactor = isAutoAnimating ? 0.13 : (isDragging ? 0.25 : 0.08);
+  const lerpFactor = isAutoAnimating ? 0.08 : (isDragging ? 0.18 : 0.05);
   currentX += (targetX - currentX) * lerpFactor;
   if (Math.abs(targetX - currentX) < 0.01) currentX = targetX;
 
@@ -2089,11 +2089,11 @@ function physLoop(time) {
   }
 
   const targetDockScale = isExpanding ? 1.05 : 1;
-  dockBaseScale += (targetDockScale - dockBaseScale) * ((isAutoAnimating || isSnapping) ? 0.08 : 0.15);
+  dockBaseScale += (targetDockScale - dockBaseScale) * ((isAutoAnimating || isSnapping) ? 0.06 : 0.10);
   if (Math.abs(dockBaseScale - targetDockScale) < 0.001) dockBaseScale = targetDockScale;
 
-  dockCurrentShiftX += (dockTargetShiftX - dockCurrentShiftX) * 0.15;
-  dockCurrentShiftY += (dockTargetShiftY - dockCurrentShiftY) * 0.15;
+  dockCurrentShiftX += (dockTargetShiftX - dockCurrentShiftX) * 0.10;
+  dockCurrentShiftY += (dockTargetShiftY - dockCurrentShiftY) * 0.10;
   if (Math.abs(dockCurrentShiftX - dockTargetShiftX) < 0.01) dockCurrentShiftX = dockTargetShiftX;
   if (Math.abs(dockCurrentShiftY - dockTargetShiftY) < 0.01) dockCurrentShiftY = dockTargetShiftY;
   dockRoot.style.transform = `translate(${dockCurrentShiftX}px, ${dockCurrentShiftY}px) scale(${dockBaseScale})`;
@@ -2103,10 +2103,10 @@ function physLoop(time) {
     const tFilterSpec = isExpanding ? targetGlassSpec : 0;
     const targetDispR = isExpanding ? 0.95 : LIQUID_CONFIG.sliderDispR;
     const targetDispB = isExpanding ? 1.05 : LIQUID_CONFIG.sliderDispB;
-    curDispR += (targetDispR - curDispR) * 0.15;
-    curDispB += (targetDispB - curDispB) * 0.15;
-    currentFilterScale += (tFilterScale - currentFilterScale) * 0.15;
-    currentFilterSpec += (tFilterSpec - currentFilterSpec) * 0.15;
+    curDispR += (targetDispR - curDispR) * 0.10;
+    curDispB += (targetDispB - curDispB) * 0.10;
+    currentFilterScale += (tFilterScale - currentFilterScale) * 0.10;
+    currentFilterSpec += (tFilterSpec - currentFilterSpec) * 0.10;
     mainGlassNodes.r.setAttribute("scale", (currentFilterScale * curDispR).toFixed(2));
     mainGlassNodes.g.setAttribute("scale", currentFilterScale.toFixed(2));
     mainGlassNodes.b.setAttribute("scale", (currentFilterScale * curDispB).toFixed(2));
@@ -2115,9 +2115,9 @@ function physLoop(time) {
 
   const dockRect = dockRoot.getBoundingClientRect();
   const targetDockInner = (isDragging || dockPressed) ? 1 : 0;
-  dockInnerOp += (targetDockInner - dockInnerOp) * 0.15;
-  globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.15;
-  currentGlowRadius += ((targetDockInner ? 1 : 1.3) - currentGlowRadius) * 0.1;
+  dockInnerOp += (targetDockInner - dockInnerOp) * 0.10;
+  globalEdgeOp += (targetDockInner - globalEdgeOp) * 0.10;
+  currentGlowRadius += ((targetDockInner ? 1 : 1.3) - currentGlowRadius) * 0.08;
   dockRoot.style.setProperty("--innerGlowOp", dockInnerOp.toFixed(3));
   dockRoot.style.setProperty("--edgeGlowOp", globalEdgeOp.toFixed(3));
   dockRoot.style.setProperty("--glowRadius", currentGlowRadius.toFixed(3));
