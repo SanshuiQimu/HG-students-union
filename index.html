@@ -378,6 +378,12 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       <div class="login-error" id="loginError">用户名或密码错误，或不在系统名单中</div>
       <div id="loginForgot" style="text-align:right;margin-top:6px"><span style="font-size:12px;color:var(--text-secondary)">忘记密码？请联系部长重置</span></div>
     </div>
+    <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text-secondary);opacity:0.5;line-height:1.8">
+      数据安全由三水柒木工作室提供担保<br>
+      © 2023-2026 三水柒木工作室<br>
+      网站部署由 Railway 提供支持<br>
+      © 2026 Railway Corp. All rights reserved.
+    </div>
   </div>
 </div>
 
@@ -582,6 +588,25 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       </div>
     </div>
 
+    <!-- 关于 -->
+    <div class="settings-section">
+      <div class="settings-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+        </svg>
+      </div>
+      <div class="settings-header-text">
+        <div class="settings-title">关于</div>
+        <div class="settings-subtitle">版权与部署信息</div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-item" style="cursor:pointer" onclick="openAboutPage()">
+        <span>关于本系统</span>
+        <span style="color:var(--text-secondary);font-size:18px">›</span>
+      </div>
+    </div>
+
     </div>
   </div>
 </div>
@@ -624,6 +649,32 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
       </div>
       <button class="btn btn-primary" onclick="submitBadgeApply()" style="width:100%;margin-top:8px;padding:14px;font-size:15px;font-weight:600">提交申请</button>
       <p id="badgeAppError" style="color:var(--danger);font-size:13px;display:none;margin-top:8px;text-align:center"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ABOUT PAGE ===== -->
+<div id="aboutPage" class="fullpage-slide slide-out-left" style="position:fixed;inset:0;z-index:2000;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:600px;margin:0 auto;padding:20px 20px 100px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-top:10px">
+      <button class="btn btn-secondary" onclick="closeAboutPage()" style="padding:8px 14px;font-size:13px">← 返回设置</button>
+      <h2 style="font-size:18px;font-weight:600">关于</h2>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px 24px;margin-top:8px">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="width:72px;height:72px;margin:0 auto 16px;border-radius:18px;overflow:hidden">
+          <img src="school-logo.png" style="width:100%;height:100%;object-fit:contain" alt="校徽">
+        </div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)">学生会人事管理系统</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:6px">华东师范大学附属龙港科技中学</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:24px;text-align:center;font-size:13px;color:var(--text-secondary);line-height:2">
+        <div style="font-weight:600;color:var(--text);font-size:14px;margin-bottom:12px">版权信息</div>
+        <div>数据安全由三水柒木工作室提供担保</div>
+        <div>© 2023-2026 三水柒木工作室</div>
+        <div style="margin-top:12px">网站部署由 Railway 提供支持</div>
+        <div>© 2026 Railway Corp. All rights reserved.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -712,16 +763,6 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
     </div>
   </div>
 </nav>
-
-<!-- 底部版权信息 -->
-<div id="footerCopyright" style="position:fixed;bottom:4px;left:0;width:100%;text-align:center;z-index:999;pointer-events:none;display:none">
-  <div style="font-size:11px;color:var(--text-secondary);opacity:0.5;line-height:1.6">
-    数据安全由三水柒木工作室提供担保<br>
-    © 2023-2026 三水柒木工作室<br>
-    网站部署由 Railway 提供支持<br>
-    © 2026 Railway Corp. All rights reserved.
-  </div>
-</div>
 
 <!-- ===== ADD/EDIT MODAL ===== -->
 <div class="modal-overlay" id="memberModal">
@@ -1084,8 +1125,6 @@ function doLogin(user, passHash){
   initMain();
   // 初始化 dock 第一个 tab 为 active
   setActiveIndex(0);
-  // 显示底部版权
-  document.getElementById('footerCopyright').style.display = 'block';
 
   // 数据已在登录时从云端同步，无需再次同步
 
@@ -1107,8 +1146,6 @@ function handleLogout(){
   switchTab(0);
   // 重置 Dock 滑块位置到第一个 tab
   setActiveIndex(0);
-  // 隐藏底部版权
-  document.getElementById('footerCopyright').style.display = 'none';
 }
 
 document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
@@ -1547,6 +1584,18 @@ function openBadgeApply(){
 }
 function closeBadgeApply(){
   var p = getBadgePage();
+  p.classList.remove('slide-in-left');
+  p.classList.add('slide-out-left');
+}
+
+// ===== ABOUT PAGE =====
+function openAboutPage(){
+  var p = document.getElementById('aboutPage');
+  p.classList.remove('slide-out-left');
+  p.classList.add('slide-in-left');
+}
+function closeAboutPage(){
+  var p = document.getElementById('aboutPage');
   p.classList.remove('slide-in-left');
   p.classList.add('slide-out-left');
 }
