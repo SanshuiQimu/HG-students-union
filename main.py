@@ -49,6 +49,9 @@ if not _use_pg:
         DB_PATH = os.path.join(_vol, 'data.db')
     elif os.path.isdir('/data'):
         DB_PATH = '/data/data.db'
+    elif os.path.isdir('/tmp'):
+        # Vercel serverless 环境只有 /tmp 可写
+        DB_PATH = '/tmp/data.db'
     else:
         DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
     print(f"[DB] 使用 SQLite: {DB_PATH}")
