@@ -43,11 +43,6 @@ def init_db():
 
 init_db()
 
-# ===== HEALTH CHECK (Railway 健康检查端点) =====
-@app.route('/health')
-def health():
-    return jsonify({"status": "ok"})
-
 # ===== STATIC FILE =====
 @app.route('/')
 def index():
