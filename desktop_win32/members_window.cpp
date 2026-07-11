@@ -260,7 +260,7 @@ LRESULT CALLBACK MembersWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 // ============================================================
 static HWND s_dlgHwnd = nullptr;
 
-static void CreateEditControls(HWND hwnd, MembersWindow* ctx) {
+void CreateEditControls(HWND hwnd, MembersWindow* ctx) {
     // 标签 + 输入框布局
     struct { const wchar_t* label; int id; } fields[] = {
         {L"姓名:", IDC_EDIT_NAME},

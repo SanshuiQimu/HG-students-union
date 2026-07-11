@@ -19,6 +19,8 @@ public:
     static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
     static INT_PTR CALLBACK EditDlgProc(HWND, UINT, WPARAM, LPARAM);
 
+    friend void CreateEditControls(HWND hwnd, MembersWindow* ctx);
+
 private:
     HINSTANCE m_hInst;
     HWND m_hwnd;
