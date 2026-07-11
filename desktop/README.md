@@ -116,19 +116,35 @@ Python 端 `QWebEnginePage.javaScriptConsoleMessage` 拦截并解析，转为 Qt
 | sound_enabled | true | 通知声音 |
 | minimize_to_tray | true | 关闭窗口时最小化到托盘 |
 
-## 打包为 exe
+## 打包为 exe（已完成）
 
-使用 PyInstaller 打包为单文件可执行程序：
+已通过 PyInstaller + `build.spec` 打包为单文件可执行程序，效果类似微信桌面端。
+
+**exe 位置**：`desktop/dist/学生会人事管理系统.exe`（约 230MB）
+
+**已实现特性**：
+- ✅ **无控制台窗口**（`console=False`）—— 纯 GUI 体验，不弹出黑框
+- ✅ **独立窗口** —— 自带标题栏、窗口图标、可调整大小
+- ✅ **任务栏图标** —— Windows 任务栏显示应用图标
+- ✅ **系统托盘常驻** —— 最小化到托盘，右键菜单
+- ✅ **双击即运行** —— 无需安装 Python 或浏览器，所有依赖内嵌
+- ✅ **内嵌后端** —— Flask 后端 + 前端页面打包在内，开箱即用
+
+**重新打包**（修改代码后）：
 
 ```bash
-pip install pyinstaller
-pyinstaller --noconsole --onefile --icon ..\school-logo.png ^
-    --add-data "..\index.html;." ^
-    --add-data "..\school-logo.png;." ^
-    main.py
+# 方式一：双击批处理脚本（推荐）
+build.bat
+
+# 方式二：Python 脚本
+cd desktop
+python build.py
+
+# 方式三：直接用 spec
+pyinstaller build.spec --noconfirm
 ```
 
-生成的 `dist\main.exe` 可独立分发运行。
+`build.spec` 配置文件包含：资源文件打包（index.html/school-logo.png）、隐式导入声明、UPX 压缩、应用图标等完整配置。
 
 ## 故障排查
 

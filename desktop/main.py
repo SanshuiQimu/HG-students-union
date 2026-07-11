@@ -19,10 +19,22 @@ import socket
 import threading
 import logging
 
-# ---- 路径：把项目根目录加入 sys.path，以便内嵌启动 Flask 后端 ----
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# ---- 路径处理（兼容 PyInstaller 打包环境）----
+def _is_frozen():
+    """检测是否运行在 PyInstaller 打包环境中。"""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+if _is_frozen():
+    # 打包后：所有资源解压至 sys._MEIPASS
+    _BASE_DIR = sys._MEIPASS
+    _PROJECT_ROOT = _BASE_DIR
+    _DESKTOP_DIR = _BASE_DIR
+else:
+    # 开发环境：项目根目录 = 桌面端目录的父目录
+    _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _DESKTOP_DIR = os.path.dirname(os.path.abspath(__file__))
+
 sys.path.insert(0, _PROJECT_ROOT)
-_DESKTOP_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _DESKTOP_DIR)
 
 from PySide6.QtWidgets import (
