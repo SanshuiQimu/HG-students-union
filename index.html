@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/school-logo.png">
@@ -85,6 +85,8 @@
 
   /* ===== MAIN PAGE ===== */
   #mainPage{display:none;min-height:100vh;padding-bottom:110px}
+  .android-app #mainPage{padding-bottom:calc(110px + env(safe-area-inset-bottom, 0px))}
+  .android-app body{padding-bottom:env(safe-area-inset-bottom, 0px)}
   .main-content{max-width:1400px;margin:0 auto;padding:32px}
 
   /* ===== TAB PAGES ===== */
