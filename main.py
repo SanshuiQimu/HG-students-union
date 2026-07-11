@@ -558,6 +558,120 @@ def auth_init():
     _supabase_post('user_account', default)
     return jsonify({'ok': True, 'message': '默认管理员已创建（用户名: 林可翔，密码: 123456）'})
 
+# ===== API: VERSION MANAGEMENT =====
+def _get_versions():
+    """从 meta 表读取版本列表"""
+    if _use_pg:
+        s = _Session()
+        try:
+            row = s.query(_Meta).filter_by(key='app_versions').first()
+            if row and row.value:
+                return json.loads(row.value)
+        finally:
+            s.close()
+    else:
+        conn = _sqlite_db()
+        row = conn.execute("SELECT value FROM meta WHERE key='app_versions'").fetchone()
+        conn.close()
+        if row and row['value']:
+            return json.loads(row['value'])
+    return []
+
+def _save_versions(versions):
+    """保存版本列表到 meta 表"""
+    data = json.dumps(versions, ensure_ascii=False)
+    if _use_pg:
+        s = _Session()
+        try:
+            row = s.query(_Meta).filter_by(key='app_versions').first()
+            if row:
+                row.value = data
+            else:
+                s.add(_Meta(key='app_versions', value=data))
+            s.commit()
+        finally:
+            s.close()
+    else:
+        conn = _sqlite_db()
+        conn.execute("INSERT OR REPLACE INTO meta (key, value) VALUES ('app_versions', ?)", (data,))
+        conn.commit()
+        conn.close()
+
+@app.route('/api/version/latest')
+def version_latest():
+    """获取最新版本信息"""
+    versions = _get_versions()
+    if not versions:
+        return jsonify({
+            'version': '3.0.309.1 Beta',
+            'versionCode': 309,
+            'date': '2026-07-11',
+            'summary': '沉浸式全屏+消息通知修复',
+            'changelog': ['沉浸式全屏，无黑边', '状态栏和导航栏透明', '消息通知后台保活修复', '首次打开请求权限'],
+            'downloadUrl': '/api/download/apk'
+        })
+    return jsonify(versions[0])
+
+@app.route('/api/version/list')
+def version_list():
+    """获取所有版本列表"""
+    versions = _get_versions()
+    if not versions:
+        # 返回默认版本
+        versions = [{
+            'version': '3.0.309.1 Beta',
+            'versionCode': 309,
+            'date': '2026-07-11',
+            'summary': '沉浸式全屏+消息通知修复'
+        }]
+    return jsonify(versions)
+
+@app.route('/api/version/<int:vc>')
+def version_detail(vc):
+    """获取指定版本的详细更新日志"""
+    versions = _get_versions()
+    for v in versions:
+        if v.get('versionCode') == vc:
+            return jsonify(v)
+    return jsonify({'error': '版本不存在'}), 404
+
+@app.route('/api/version/upload', methods=['POST'])
+def version_upload():
+    """上传新版本信息（需要管理员密码）"""
+    auth = request.headers.get('X-Auth', '')
+    # 简单密码验证
+    if auth != 'sqgm-admin-2026':
+        return jsonify({'error': '无权限'}), 403
+
+    data = request.get_json()
+    if not data or 'version' not in data or 'versionCode' not in data:
+        return jsonify({'error': '缺少必要字段'}), 400
+
+    versions = _get_versions()
+    # 移除同版本号的旧记录
+    versions = [v for v in versions if v.get('versionCode') != data['versionCode']]
+    # 新版本插入到最前面
+    new_ver = {
+        'version': data['version'],
+        'versionCode': data['versionCode'],
+        'date': data.get('date', ''),
+        'summary': data.get('summary', ''),
+        'changelog': data.get('changelog', []),
+        'downloadUrl': '/api/download/apk'
+    }
+    versions.insert(0, new_ver)
+    _save_versions(versions)
+    return jsonify({'ok': True, 'message': '版本已添加'})
+
+@app.route('/api/download/apk')
+def download_apk():
+    """下载最新版 APK"""
+    base = os.path.dirname(os.path.abspath(__file__))
+    apk_path = os.path.join(base, 'downloads', 'StudentsUnion.apk')
+    if os.path.isfile(apk_path):
+        return send_from_directory(os.path.join(base, 'downloads'), 'StudentsUnion.apk', as_attachment=True)
+    return jsonify({'error': 'APK 文件不存在'}), 404
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)

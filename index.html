@@ -776,10 +776,56 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
         <div>© 2026 蜜蜂图床</div>
       </div>
     </div>
+    <!-- 系统更新入口 -->
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:0;margin-top:16px;overflow:hidden">
+      <div class="settings-item" style="cursor:pointer;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border:none" onclick="openUpdatePage()">
+        <span style="font-size:15px">系统更新</span>
+        <span style="color:var(--text-secondary);font-size:18px">›</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- SVG Filters container -->
+<!-- ===== UPDATE LIST PAGE (二级界面) ===== -->
+<div id="updatePage" class="fullpage-slide slide-out-left" style="position:fixed;inset:0;z-index:2100;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:600px;margin:0 auto;padding:20px 20px 100px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-top:10px">
+      <button class="btn btn-secondary" onclick="closeUpdatePage()" style="padding:8px 14px;font-size:13px">← 返回</button>
+      <h2 style="font-size:18px;font-weight:600">系统更新</h2>
+    </div>
+    <!-- 应用信息头 -->
+    <div style="text-align:center;padding:32px 20px 24px">
+      <div style="width:64px;height:64px;margin:0 auto 14px;border-radius:16px;overflow:hidden">
+        <img src="school-logo.png" style="width:100%;height:100%;object-fit:contain" alt="校徽">
+      </div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">华高学生会人事管理系统</div>
+      <div id="updateCurrentVer" style="font-size:13px;color:var(--text-secondary);margin-top:6px">版本 3.0.309.1 Beta</div>
+    </div>
+    <!-- 版本列表 -->
+    <div id="updateVerList" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+      <!-- 动态填充 -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== UPDATE DETAIL PAGE (三级界面) ===== -->
+<div id="updateDetailPage" class="fullpage-slide slide-out-left" style="position:fixed;inset:0;z-index:2200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:600px;margin:0 auto;padding:20px 20px 100px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-top:10px">
+      <button class="btn btn-secondary" onclick="closeUpdateDetailPage()" style="padding:8px 14px;font-size:13px">← 返回</button>
+      <h2 id="updateDetailTitle" style="font-size:18px;font-weight:600">更新日志</h2>
+    </div>
+    <!-- 检测更新卡片 -->
+    <div id="checkUpdateCard" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+      <div id="checkUpdateLeft" style="font-size:15px;font-weight:500;transition:opacity .4s ease">检测更新</div>
+      <button id="checkUpdateBtn" onclick="doCheckUpdate()" style="padding:8px 18px;border-radius:10px;border:none;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .4s ease,background .3s">检测更新</button>
+    </div>
+    <!-- 更新日志内容 -->
+    <div id="updateDetailContent" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px 20px">
+      <!-- 动态填充 -->
+    </div>
+  </div>
+</div>
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;pointer-events:none" color-interpolation-filters="sRGB">
   <defs id="svg-defs"></defs>
 </svg>
@@ -1333,6 +1379,8 @@ function tryAutoLogin(){
 // ===== 返回键处理 =====
 function _closeTopPanel(){
   var panels = [
+    {id: 'updateDetailPage', close: 'closeUpdateDetailPage()'},
+    {id: 'updatePage', close: 'closeUpdatePage()'},
     {id: 'aboutPage', close: 'closeAboutPage()'},
     {id: 'targetedMsgPage', close: 'closeTargetedMsg()'},
     {id: 'broadcastPage', close: 'closeBroadcast()'},
@@ -2053,6 +2101,172 @@ function closeAboutPage(){
   var p = document.getElementById('aboutPage');
   p.classList.remove('slide-in-left');
   p.classList.add('slide-out-left');
+}
+
+// ===== 系统更新 =====
+var _currentVerCode = 309; // 当前安装的版本号
+var _updateVersions = [];
+var _selectedVerCode = 0;
+
+function openUpdatePage(){
+  var p = document.getElementById('updatePage');
+  p.classList.remove('slide-out-left');
+  p.classList.add('slide-in-left');
+  loadVersionList();
+}
+
+function closeUpdatePage(){
+  var p = document.getElementById('updatePage');
+  p.classList.remove('slide-in-left');
+  p.classList.add('slide-out-left');
+}
+
+function loadVersionList(){
+  var listEl = document.getElementById('updateVerList');
+  listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:14px">加载中...</div>';
+  fetch(API_BASE + '/api/version/list')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _updateVersions = Array.isArray(data) ? data : [];
+      renderVersionList();
+    })
+    .catch(function(){
+      listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:14px">加载失败</div>';
+    });
+}
+
+function renderVersionList(){
+  var listEl = document.getElementById('updateVerList');
+  if(!_updateVersions.length){
+    listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:14px">暂无版本信息</div>';
+    return;
+  }
+  var html = '';
+  _updateVersions.forEach(function(v, i){
+    var isCurrent = v.versionCode === _currentVerCode;
+    html += '<div onclick="openUpdateDetail(' + v.versionCode + ')" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:' + (i < _updateVersions.length - 1 ? '1px solid var(--border)' : 'none') + '">';
+    html += '<div>';
+    html += '<div style="font-size:15px;font-weight:500;color:var(--text)">华高学生会 ' + v.version + ' 主要更新</div>';
+    html += '<div style="font-size:13px;color:var(--text-secondary);margin-top:4px">' + (v.date || '') + (isCurrent ? ' · 当前版本' : '') + '</div>';
+    html += '</div>';
+    html += '<span style="color:var(--text-secondary);font-size:18px">›</span>';
+    html += '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function openUpdateDetail(vc){
+  _selectedVerCode = vc;
+  var p = document.getElementById('updateDetailPage');
+  p.classList.remove('slide-out-left');
+  p.classList.add('slide-in-left');
+
+  // 重置检测更新卡片
+  document.getElementById('checkUpdateLeft').textContent = '检测更新';
+  document.getElementById('checkUpdateLeft').style.opacity = '1';
+  document.getElementById('checkUpdateBtn').textContent = '检测更新';
+  document.getElementById('checkUpdateBtn').style.opacity = '1';
+  document.getElementById('checkUpdateBtn').style.background = '#22c55e';
+  document.getElementById('checkUpdateBtn').onclick = doCheckUpdate;
+
+  // 加载版本详情
+  fetch(API_BASE + '/api/version/' + vc)
+    .then(function(r){ return r.json(); })
+    .then(function(v){
+      document.getElementById('updateDetailTitle').textContent = v.version + ' 更新日志';
+      var content = '';
+      content += '<div style="font-size:14px;color:var(--text-secondary);margin-bottom:16px">' + (v.date || '') + '</div>';
+      if(v.changelog && v.changelog.length){
+        content += '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px">主要更新</div>';
+        v.changelog.forEach(function(item){
+          content += '<div style="display:flex;gap:10px;padding:6px 0;font-size:14px;color:var(--text);line-height:1.6"><span style="color:var(--gold);flex-shrink:0">•</span><span>' + item + '</span></div>';
+        });
+      } else if(v.summary){
+        content += '<div style="font-size:14px;color:var(--text);line-height:1.6">' + v.summary + '</div>';
+      }
+      document.getElementById('updateDetailContent').innerHTML = content;
+    })
+    .catch(function(){
+      document.getElementById('updateDetailContent').innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px">加载失败</div>';
+    });
+}
+
+function closeUpdateDetailPage(){
+  var p = document.getElementById('updateDetailPage');
+  p.classList.remove('slide-in-left');
+  p.classList.add('slide-out-left');
+}
+
+function doCheckUpdate(){
+  var leftEl = document.getElementById('checkUpdateLeft');
+  var btnEl = document.getElementById('checkUpdateBtn');
+
+  // 检测中状态
+  leftEl.textContent = '正在检测...';
+  btnEl.disabled = true;
+  btnEl.style.opacity = '0.6';
+
+  fetch(API_BASE + '/api/version/latest')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      btnEl.disabled = false;
+      btnEl.style.opacity = '1';
+
+      if(data.versionCode > _currentVerCode){
+        // 发现新版本 - 渐隐渐显
+        leftEl.style.opacity = '0';
+        btnEl.style.opacity = '0';
+        setTimeout(function(){
+          leftEl.textContent = '发现新版本 ' + data.version;
+          leftEl.style.color = '#22c55e';
+          leftEl.style.opacity = '1';
+          btnEl.textContent = '更新';
+          btnEl.style.background = 'var(--gold)';
+          btnEl.style.color = '#000';
+          btnEl.style.opacity = '1';
+          btnEl.onclick = function(){ doDownloadUpdate(data); };
+        }, 400);
+      } else {
+        // 已是最新版本
+        leftEl.style.opacity = '0';
+        btnEl.style.opacity = '0';
+        setTimeout(function(){
+          leftEl.textContent = '已是最新版本';
+          leftEl.style.color = 'var(--text-secondary)';
+          leftEl.style.opacity = '1';
+          btnEl.textContent = '检测更新';
+          btnEl.style.opacity = '1';
+          btnEl.onclick = doCheckUpdate;
+        }, 400);
+      }
+    })
+    .catch(function(){
+      btnEl.disabled = false;
+      btnEl.style.opacity = '1';
+      leftEl.textContent = '检测失败，请重试';
+      leftEl.style.color = 'var(--danger)';
+    });
+}
+
+function doDownloadUpdate(verInfo){
+  var btnEl = document.getElementById('checkUpdateBtn');
+  btnEl.textContent = '下载中...';
+  btnEl.disabled = true;
+
+  // 在 Android App 中通过 WebView 下载
+  var downloadUrl = API_BASE + '/api/download/apk';
+
+  // 尝试用 Android 原生下载
+  if(window.AndroidNative && window.AndroidNative.downloadApk){
+    window.AndroidNative.downloadApk(downloadUrl);
+    btnEl.textContent = '正在安装...';
+    return;
+  }
+
+  // 浏览器环境直接跳转下载
+  window.open(downloadUrl, '_blank');
+  btnEl.textContent = '已开始下载';
+  btnEl.disabled = false;
 }
 function submitBadgeApply(){
   var text = document.getElementById('badgeConfirmText').value.trim();
