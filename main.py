@@ -679,19 +679,67 @@ def version_upload():
         'date': data.get('date', ''),
         'summary': data.get('summary', ''),
         'changelog': data.get('changelog', []),
-        'downloadUrl': '/api/download/apk'
+        'tag': data.get('tag', '正式版内测'),
+        'downloadUrl': '/api/download/apk?vc=' + str(data['versionCode'])
     }
     versions.insert(0, new_ver)
     _save_versions(versions)
     return jsonify({'ok': True, 'message': '版本已添加'})
 
+@app.route('/api/version/check_apk')
+def check_apk():
+    """检查指定版本的 APK 是否存在"""
+    vc = request.args.get('vc', '')
+    base = os.path.dirname(os.path.abspath(__file__))
+    downloads_dir = os.path.join(base, 'downloads')
+
+    if vc:
+        # 查找对应版本的 APK
+        versions = _get_versions()
+        for v in versions:
+            if str(v.get('versionCode', '')) == vc:
+                fname = 'StudentsUnion_' + v.get('version', '') + '.apk'
+                if os.path.isfile(os.path.join(downloads_dir, fname)):
+                    return jsonify({'exists': True})
+                # 退回默认 APK（最新版）
+                if os.path.isfile(os.path.join(downloads_dir, 'StudentsUnion.apk')):
+                    # 只有最新版本才能用默认文件
+                    if v == versions[0]:
+                        return jsonify({'exists': True})
+                return jsonify({'exists': False}), 404
+        return jsonify({'exists': False}), 404
+    else:
+        if os.path.isfile(os.path.join(downloads_dir, 'StudentsUnion.apk')):
+            return jsonify({'exists': True})
+        return jsonify({'exists': False}), 404
+
 @app.route('/api/download/apk')
 def download_apk():
-    """下载最新版 APK"""
+    """下载 APK，支持 vc 参数下载指定版本"""
+    vc = request.args.get('vc', '')
     base = os.path.dirname(os.path.abspath(__file__))
-    apk_path = os.path.join(base, 'downloads', 'StudentsUnion.apk')
-    if os.path.isfile(apk_path):
-        return send_from_directory(os.path.join(base, 'downloads'), 'StudentsUnion.apk', as_attachment=True)
+    downloads_dir = os.path.join(base, 'downloads')
+
+    if vc:
+        # 查找对应版本的 APK
+        versions = _get_versions()
+        for v in versions:
+            if str(v.get('versionCode', '')) == vc:
+                # 撤包版本不允许下载
+                if v.get('tag') == '已撤包':
+                    return jsonify({'error': '该版本已撤包'}), 403
+                fname = 'StudentsUnion_' + v.get('version', '') + '.apk'
+                if os.path.isfile(os.path.join(downloads_dir, fname)):
+                    return send_from_directory(downloads_dir, fname, as_attachment=True)
+                # 退回默认 APK（最新版）
+                if v == versions[0] and os.path.isfile(os.path.join(downloads_dir, 'StudentsUnion.apk')):
+                    return send_from_directory(downloads_dir, 'StudentsUnion.apk', as_attachment=True)
+                return jsonify({'error': '该版本安装包不存在'}), 404
+        return jsonify({'error': '版本不存在'}), 404
+
+    # 默认下载最新版
+    if os.path.isfile(os.path.join(downloads_dir, 'StudentsUnion.apk')):
+        return send_from_directory(downloads_dir, 'StudentsUnion.apk', as_attachment=True)
     return jsonify({'error': 'APK 文件不存在'}), 404
 
 if __name__ == '__main__':

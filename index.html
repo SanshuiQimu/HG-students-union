@@ -821,6 +821,11 @@ html.light-mode #frosted-slider.expanding{box-shadow:inset 0 0 var(--inner-shado
     <div id="updateDetailContent" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px 20px">
       <!-- 动态填充 -->
     </div>
+    <!-- 下载该版本安装包 -->
+    <div id="updateDownloadCard" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-top:16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:14px;color:var(--text-secondary)">安装包</div>
+      <button id="updateDownloadBtn" style="padding:8px 18px;border-radius:10px;border:none;background:var(--gold);color:#000;font-size:14px;font-weight:600;cursor:pointer">下载安装包</button>
+    </div>
   </div>
 </div>
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;pointer-events:none" color-interpolation-filters="sRGB">
@@ -1480,6 +1485,14 @@ function switchTab(idx){
   if(idx === 1){
     renderDeptGrid();
   }
+  // Tab4(设置): 提前检测浏览器/App环境，设置系统更新入口文案
+  if(idx === 3){
+    var isApp = document.documentElement.classList.contains('android-app');
+    var labelEl = document.getElementById('updateEntryLabel');
+    if(labelEl){
+      labelEl.textContent = isApp ? '系统更新' : '安装App';
+    }
+  }
 }
 
 // ===== MAIN =====
@@ -2129,7 +2142,7 @@ function openUpdatePage(){
       .catch(function(){
         document.getElementById('checkUpdateLeft').textContent = '最新版本 3.0.310.2';
       });
-    document.getElementById('checkUpdateBtn').textContent = '即可下载';
+    document.getElementById('checkUpdateBtn').textContent = '即刻体验';
     document.getElementById('checkUpdateBtn').onclick = function(){ doDownloadUpdate(null); };
   }
   p.classList.remove('slide-out-left');
@@ -2213,10 +2226,62 @@ function openUpdateDetail(vc){
         content += '<div style="font-size:14px;color:var(--text);line-height:1.6">' + v.summary + '</div>';
       }
       document.getElementById('updateDetailContent').innerHTML = content;
+
+      // 设置下载按钮状态
+      var dlBtn = document.getElementById('updateDownloadBtn');
+      var dlCard = document.getElementById('updateDownloadCard');
+      var canDownload = v.downloadUrl && v.downloadUrl !== '' && v.tag !== '已撤包';
+
+      if(canDownload){
+        // 检查 APK 是否存在
+        fetch(API_BASE + '/api/version/check_apk?vc=' + vc, {method:'HEAD'})
+          .then(function(r){
+            if(r.ok){
+              dlBtn.textContent = '下载安装包';
+              dlBtn.disabled = false;
+              dlBtn.style.opacity = '1';
+              dlBtn.style.cursor = 'pointer';
+              dlBtn.style.background = 'var(--gold)';
+              dlBtn.style.color = '#000';
+              dlBtn.onclick = function(){ downloadSpecificVersion(v); };
+            } else {
+              disableDownloadBtn('安装包不存在');
+            }
+          })
+          .catch(function(){
+            disableDownloadBtn('安装包不存在');
+          });
+      } else {
+        disableDownloadBtn(v.tag === '已撤包' ? '已撤包，无法下载' : '安装包不存在');
+      }
     })
     .catch(function(){
       document.getElementById('updateDetailContent').innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px">加载失败</div>';
     });
+}
+
+function disableDownloadBtn(text){
+  var dlBtn = document.getElementById('updateDownloadBtn');
+  dlBtn.textContent = text;
+  dlBtn.disabled = true;
+  dlBtn.style.opacity = '0.4';
+  dlBtn.style.cursor = 'not-allowed';
+  dlBtn.style.background = 'var(--border)';
+  dlBtn.style.color = 'var(--text-secondary)';
+  dlBtn.onclick = null;
+}
+
+function downloadSpecificVersion(v){
+  var dlBtn = document.getElementById('updateDownloadBtn');
+  var downloadUrl = API_BASE + '/api/download/apk?vc=' + v.versionCode;
+
+  if(window.AndroidNative && window.AndroidNative.downloadApk){
+    window.AndroidNative.downloadApk(downloadUrl);
+    dlBtn.textContent = '正在下载...';
+    return;
+  }
+  window.open(downloadUrl, '_blank');
+  dlBtn.textContent = '已开始下载';
 }
 
 function closeUpdateDetailPage(){
